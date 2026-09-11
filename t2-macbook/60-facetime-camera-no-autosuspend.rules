@@ -1,0 +1,7 @@
+# FaceTime HD Camera on the T2 bridge: never runtime-suspend it.
+#
+# A plain usb_device "add" rule is not enough: the uvcvideo driver calls
+# usb_enable_autosuspend() at the end of its probe, which flips power/control
+# back to "auto" after that event was handled. The interface "bind" event is
+# emitted only once probe has returned, so writing "on" there sticks.
+ACTION=="bind", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_interface", DRIVER=="uvcvideo", ATTRS{idVendor}=="05ac", ATTRS{idProduct}=="8514", RUN+="/bin/sh -c 'echo on > /sys%p/../power/control'"

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "face-unlock.lock",
+  "name": "Face Unlock Lock Screen",
+  "version": "1.0.0",
+  "author": "Steffen Roemer",
+  "description": "Omarchy lock screen with passive face unlock through Howdy, next to the stock password and fingerprint flows.",
+  "kinds": [
+    "service"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml"
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.lock"
+  }
+}
