@@ -49,23 +49,19 @@ sudo pacman -S --needed --noconfirm base-devel git boost cmake meson ninja \
 export MAKEFLAGS="-j$(nproc)"
 mkdir -p "$BUILD"
 
-# AUR packages, pinned to the exact PKGBUILD commit that was reviewed. Bump
-# the hash after reading the diff on aur.archlinux.org; never build from HEAD.
-declare -A AUR_COMMIT=(
-  [python-dlib]=84910843274aa2989f0ebb3cba3347ba7c78f6b8
-  [howdy-git]=d907484f3f4c73f2d6924ada0884d6cafb923d3a
-)
-
+# AUR packages are built only at an exact, reviewed PKGBUILD commit. Bump a
+# hash after reading the diff on aur.archlinux.org; never build from HEAD.
 aur_build() {
-  local pkg=$1 commit=${AUR_COMMIT[$1]}
+  local pkg=$1 commit=$2
+  [[ $commit =~ ^[0-9a-f]{40}$ ]] || { echo "refusing to build $pkg: no full commit pinned" >&2; exit 1; }
   if pacman -Q "$pkg" &>/dev/null; then
     echo "$pkg already installed"
     return
   fi
   if [[ ! -d $BUILD/$pkg/.git ]]; then
-    git clone -q "https://aur.archlinux.org/$pkg.git" "$BUILD/$pkg"
+    git clone -q --no-checkout "https://aur.archlinux.org/$pkg.git" "$BUILD/$pkg"
   fi
-  git -C "$BUILD/$pkg" fetch -q origin
+  git -C "$BUILD/$pkg" fetch -q origin "$commit" 2>/dev/null || git -C "$BUILD/$pkg" fetch -q origin
   git -C "$BUILD/$pkg" checkout -q --detach "$commit"
   echo "$pkg at $(git -C "$BUILD/$pkg" rev-parse --short HEAD)"
   if [[ $pkg == python-dlib ]]; then
@@ -77,10 +73,10 @@ aur_build() {
 }
 
 step "Building python-dlib (CPU only; 10-20 minutes the first time)"
-aur_build python-dlib
+aur_build python-dlib 84910843274aa2989f0ebb3cba3347ba7c78f6b8
 
 step "Building howdy-git (native PAM module)"
-aur_build howdy-git
+aur_build howdy-git d907484f3f4c73f2d6924ada0884d6cafb923d3a
 
 step "Choosing a camera"
 CAM=${CAMERA:-}
