@@ -81,6 +81,35 @@ until a reboot. A udev rule keeps the camera powered:
 The camera also has no mmap support, so the installer switches Howdy to the
 ffmpeg recorder when OpenCV cannot read frames.
 
+## Dependencies
+
+| Dependency | Source | Purpose |
+|------------|--------|---------|
+| [howdy-git](https://aur.archlinux.org/packages/howdy-git) | AUR, pinned to a reviewed commit in `setup/install.sh` | face recognition PAM module |
+| [python-dlib](https://aur.archlinux.org/packages/python-dlib) | AUR, pinned likewise, built CPU-only | face detection library used by Howdy |
+| python-opencv, ffmpeg, v4l-utils, boost, cmake, meson, ninja, jq | Arch repos | camera capture and build tools |
+
+Building the AUR packages runs `makepkg` as your user and installs the result
+with `sudo pacman`. The pinned commits are the PKGBUILD revisions that were
+reviewed for this repository; bump them yourself after reading the diff.
+
+## What the installer changes
+
+All of it is shown on screen as it happens, and all of it needs your sudo
+password:
+
+- Installs the packages above.
+- Edits `/etc/howdy/config.ini`: `device_path`, `timeout`, and
+  `recording_plugin` when OpenCV cannot read the camera.
+- Creates `/etc/pam.d/omarchy-lock-face` and, if a previous setup put
+  `pam_howdy` into `/etc/pam.d/omarchy-lock-password`, removes it from there.
+- With `--sddm`: prepends `pam_howdy` to `/etc/pam.d/sddm`.
+- Installs the plugin through `omarchy plugin add`, which disables the stock
+  lock screen while this one is enabled.
+
+It does not touch `sudo`, polkit, your Hyprland config, or any other user
+configuration. The optional lid binding is a line you add yourself.
+
 ## Uninstall
 
 ```sh
@@ -101,7 +130,9 @@ fingerprint stacks are untouched.
 
 Being a fork, it does not follow upstream changes to the lock plugin on its
 own. `omarchy-shell lock status` shows which version is loaded and whether face
-unlock is configured.
+unlock is configured. The plugin id is `com.orkitec.face-unlock`; disable it
+with `omarchy plugin disable com.orkitec.face-unlock` to get the stock lock
+screen back.
 
 ## Files
 
