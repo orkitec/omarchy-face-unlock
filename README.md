@@ -34,7 +34,7 @@ on the camera: an unattended lock screen keeps the camera and CPU idle.
 ## Install
 
 ```sh
-git clone https://github.com/steffen-roemer/omarchy-face-unlock.git
+git clone https://github.com/orkitec/omarchy-face-unlock.git
 cd omarchy-face-unlock
 ./setup/install.sh            # add --sddm to also cover the login screen
 ```
@@ -116,3 +116,7 @@ unlock is configured.
 
 MIT. `Service.qml` and `LockView.qml` derive from Omarchy, also MIT, copyright
 David Heinemeier Hansson.
+
+---
+
+Made by [Orkitec](https://github.com/orkitec).

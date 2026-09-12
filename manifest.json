@@ -3,7 +3,7 @@
   "id": "face-unlock.lock",
   "name": "Face Unlock Lock Screen",
   "version": "1.0.0",
-  "author": "Steffen Roemer",
+  "author": "Orkitec",
   "description": "Omarchy lock screen with passive face unlock through Howdy, next to the stock password and fingerprint flows.",
   "kinds": [
     "service"
