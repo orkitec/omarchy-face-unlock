@@ -49,34 +49,31 @@ sudo pacman -S --needed --noconfirm base-devel git boost cmake meson ninja \
 export MAKEFLAGS="-j$(nproc)"
 mkdir -p "$BUILD"
 
-# AUR packages are built only at an exact, reviewed PKGBUILD commit. Bump a
-# hash after reading the diff on aur.archlinux.org; never build from HEAD.
-aur_build() {
-  local pkg=$1 commit=$2
-  [[ $commit =~ ^[0-9a-f]{40}$ ]] || { echo "refusing to build $pkg: no full commit pinned" >&2; exit 1; }
-  if pacman -Q "$pkg" &>/dev/null; then
-    echo "$pkg already installed"
-    return
-  fi
-  if [[ ! -d $BUILD/$pkg/.git ]]; then
-    git clone -q --no-checkout "https://aur.archlinux.org/$pkg.git" "$BUILD/$pkg"
-  fi
-  git -C "$BUILD/$pkg" fetch -q origin "$commit" 2>/dev/null || git -C "$BUILD/$pkg" fetch -q origin
-  git -C "$BUILD/$pkg" checkout -q --detach "$commit"
-  echo "$pkg at $(git -C "$BUILD/$pkg" rev-parse --short HEAD)"
-  if [[ $pkg == python-dlib ]]; then
-    # The AUR PKGBUILD defaults to a CUDA build, which drags in the whole
-    # CUDA toolkit. Face unlock is fine on the CPU.
-    sed -i 's/^_build_cuda=1/_build_cuda=0/' "$BUILD/$pkg/PKGBUILD"
-  fi
-  (cd "$BUILD/$pkg" && makepkg -si --noconfirm --needed)
-}
-
+# AUR packages are built only at an exact, reviewed PKGBUILD commit, checked
+# out detached in one fail-closed chain. Bump a hash after reading the diff on
+# aur.archlinux.org; never build from HEAD.
 step "Building python-dlib (CPU only; 10-20 minutes the first time)"
-aur_build python-dlib 84910843274aa2989f0ebb3cba3347ba7c78f6b8
+if pacman -Q python-dlib &>/dev/null; then
+  echo "python-dlib already installed"
+else
+  rm -rf "$BUILD/python-dlib"
+  # The AUR PKGBUILD defaults to a CUDA build, which drags in the whole CUDA
+  # toolkit. Face unlock is fine on the CPU.
+  git clone -q --no-checkout https://aur.archlinux.org/python-dlib.git "$BUILD/python-dlib" \
+    && git -C "$BUILD/python-dlib" checkout -q --detach 84910843274aa2989f0ebb3cba3347ba7c78f6b8 \
+    && sed -i 's/^_build_cuda=1/_build_cuda=0/' "$BUILD/python-dlib/PKGBUILD" \
+    && makepkg -D "$BUILD/python-dlib" -si --noconfirm --needed
+fi
 
 step "Building howdy-git (native PAM module)"
-aur_build howdy-git d907484f3f4c73f2d6924ada0884d6cafb923d3a
+if pacman -Q howdy-git &>/dev/null; then
+  echo "howdy-git already installed"
+else
+  rm -rf "$BUILD/howdy-git"
+  git clone -q --no-checkout https://aur.archlinux.org/howdy-git.git "$BUILD/howdy-git" \
+    && git -C "$BUILD/howdy-git" checkout -q --detach d907484f3f4c73f2d6924ada0884d6cafb923d3a \
+    && makepkg -D "$BUILD/howdy-git" -si --noconfirm --needed
+fi
 
 step "Choosing a camera"
 CAM=${CAMERA:-}
